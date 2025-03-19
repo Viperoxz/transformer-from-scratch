@@ -21,42 +21,39 @@ def attention(query, key, value, mask=None, dropout=None):
 
 class MultiHeadedAttention(nn.Module):
 
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, n_heads, d_model, dropout=0.1):
         "Take in model size and number of heads."
         super().__init__()
-        assert d_model % h == 0 # d_model / h = d_k = d_v
-        self.d_k = d_model // h
-        self.h = h
+        assert d_model % n_heads == 0 # d_model / n_heads = d_k = d_v
+        self.d_k = d_model // n_heads
+        self.n_heads = n_heads
         self.linears = clones(nn.Linear(d_model, d_model), 4)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, query, key, value, mask=None):
         if mask is not None:
-        # Same mask applied to all h heads.
-            mask = mask.unsqueeze(1)
+            mask = mask.unsqueeze(1) # Same mask applied to all n_heads heads
         n_batches = query.size(0)
 
-        # 1) Do all the linear projections in batch from d_model => (h x d_k)
+        # 1) Do all the linear projections in batch from d_model => (n_heads x d_k)
         # Apply linear transformation to query, key, value
         query = self.linears[0](query) 
         key = self.linears[1](key)
         value = self.linears[2](value)
         ''' 
-        Split the d_model into h heads: (batch_size, n_batches, d_model) -> (batch_size, n_batches, h, d_k)
-        Then transpose the result to (batch_size, h, n_batches, d_k) to prepare for the subsequent matrix multiplication.
+        Split the d_model into n_heads heads: (batch_size, n_batches, d_model) -> (batch_size, n_batches, n_heads, d_k)
+        Then transpose the result to (batch_size, n_heads, n_batches, d_k) to prepare for the subsequent matrix multiplication.
         '''
-        query = query.view(n_batches, -1, self.h, self.d_k).transpose(1, 2)
-        key = key.view(n_batches, -1, self.h, self.d_k).transpose(1, 2)
-        value = value.view(n_batches, -1, self.h, self.d_k).transpose(1, 2)
+        query = query.view(n_batches, -1, self.n_heads, self.d_k).transpose(1, 2)
+        key = key.view(n_batches, -1, self.n_heads, self.d_k).transpose(1, 2)
+        value = value.view(n_batches, -1, self.n_heads, self.d_k).transpose(1, 2)
 
         # 2) Apply attention on all the projected vectors in batch
-        x, self.attn = attention(
-            query, key, value, mask=mask, dropout=self.dropout
-            )
+        x, self.attn = attention(query, key, value, mask=mask, dropout=self.dropout) # x shape: (batch_size, n_heads, n_batches, d_k)
 
         # 3) Concat using a view and apply a final linear
-        x = x.transpose(1, 2).contiguous().view(n_batches, -1, self.h * self.d_k)
+        x = x.transpose(1, 2).contiguous().view(n_batches, -1, self.n_heads * self.d_k)
 
         del query, key, value
         return self.linears[-1](x)
