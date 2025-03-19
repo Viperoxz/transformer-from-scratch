@@ -25,10 +25,10 @@ class EncoderLayer(nn.Module):
         super().__init__()
         self.self_attn = self_attn
         self.feed_forward = feed_forward
-        self.sublayer = clones(SublayerConnection(size, dropout), 2)
+        self.sublayer = clones(SublayerConnection(size, dropout), 2) # 2 sub-layers: self-attn, feed forward
         self.size = size
 
     def forward(self, x, mask):
         "Follow Figure 1 (left) for connections."
-        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
-        return self.sublayer[1](x, self.feed_forward)
+        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask)) # self-attention
+        return self.sublayer[1](x, self.feed_forward) # feed forward
