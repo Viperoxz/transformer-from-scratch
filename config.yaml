@@ -1,0 +1,6 @@
+model:
+  d_model: 512
+  n_heads: 8
+training:
+  batch_size: 32
+  epochs: 10
