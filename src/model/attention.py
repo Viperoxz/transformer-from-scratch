@@ -42,15 +42,15 @@ class MultiHeadedAttention(nn.Module):
         key = self.linears[1](key)
         value = self.linears[2](value)
         ''' 
-        Split the d_model into n_heads heads: (batch_size, n_batches, d_model) -> (batch_size, n_batches, n_heads, d_k)
-        Then transpose the result to (batch_size, n_heads, n_batches, d_k) to prepare for the subsequent matrix multiplication.
+        Split the d_model into n_heads heads: (n_batches, seq_len, d_model) -> (n_batches, seq_len, n_heads, d_k)
+        Then transpose the result to (n_batches, n_heads, seq_len, d_k) to prepare for the subsequent matrix multiplication.
         '''
         query = query.view(n_batches, -1, self.n_heads, self.d_k).transpose(1, 2)
         key = key.view(n_batches, -1, self.n_heads, self.d_k).transpose(1, 2)
         value = value.view(n_batches, -1, self.n_heads, self.d_k).transpose(1, 2)
 
         # 2) Apply attention on all the projected vectors in batch
-        x, self.attn = attention(query, key, value, mask=mask, dropout=self.dropout) # x shape: (batch_size, n_heads, n_batches, d_k)
+        x, self.attn = attention(query, key, value, mask=mask, dropout=self.dropout) # x shape: (n_batches, n_heads, seq_len, d_k)
 
         # 3) Concat using a view and apply a final linear
         x = x.transpose(1, 2).contiguous().view(n_batches, -1, self.n_heads * self.d_k)

@@ -49,7 +49,7 @@ def test_multihead_attention():
     print("Test MultiHeadedAttention passed! \n")
 
 
-
+# Run the tests
 test_subsequent_mask()
 test_multihead_attention()
 print("All tests passed")

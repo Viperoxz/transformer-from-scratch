@@ -10,7 +10,8 @@ def is_interactive_notebook():
 
 def show_example(fn, args=[]):
     """Hiển thị kết quả của một hàm ví dụ nếu đang chạy trực tiếp và RUN_EXAMPLES bật."""
-    if __name__ == "__main__" and RUN_EXAMPLES:
+    # if __name__ == "__main__" and RUN_EXAMPLES:
+    if RUN_EXAMPLES:
         return fn(*args)
 
 

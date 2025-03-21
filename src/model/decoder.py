@@ -1,6 +1,8 @@
 # Transformer Decoder implementation
 import torch.nn as nn
 from src.model.utils import clones, LayerNorm
+from src.model.utils import SublayerConnection
+
 
 
 class Decoder(nn.Module):
