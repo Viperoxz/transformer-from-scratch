@@ -23,7 +23,7 @@ def inference_test():
         next_word = next_word.data[0]
         ys = torch.cat(
             [ys, torch.empty(1, 1).type_as(src.data).fill_(next_word)], dim=1
-        )
+        )   
     print("Example Untrained Model Prediction:", ys)
 
 def run_tests():
