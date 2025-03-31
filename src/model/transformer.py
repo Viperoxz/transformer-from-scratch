@@ -48,22 +48,63 @@ class EncoderDecoder(nn.Module):
     def decode(self, memory, src_mask, tgt, tgt_mask):
         return self.decoder(self.tgt_embed(tgt), memory, src_mask, tgt_mask)
     
+class DecoderOnlyTransformer(nn.Module):
+    """A Decoder-only Transformer for language modeling."""
+    def __init__(self, decoder, tgt_embed, generator):
+        super().__init__()
+        self.decoder = decoder
+        self.tgt_embed = tgt_embed
+        self.generator = generator
 
-def make_model(src_vocab, tgt_vocab, N=6, d_model=512, d_ff=2048, h=8, dropout=0.1):
+    def forward(self, tgt, tgt_mask):
+        """Process target sequence and predict next tokens."""
+        embedded = self.tgt_embed(tgt)
+        output = self.decoder(embedded, tgt_mask)
+        return self.generator(output)
+    
+
+# def make_model(src_vocab, tgt_vocab, N=6, d_model=512, d_ff=2048, h=8, dropout=0.1):
+#     c = copy.deepcopy
+#     attn = MultiHeadedAttention(h, d_model)
+#     ff = FeedForward(d_model, d_ff, dropout)
+#     position = PositionalEncoding(d_model, dropout)
+#     model = EncoderDecoder(
+#         Encoder(EncoderLayer(d_model, c(attn), c(ff), dropout), N),
+#         Decoder(DecoderLayer(d_model, c(attn), c(attn), c(ff), dropout), N),
+#         nn.Sequential(Embeddings(d_model, src_vocab), c(position)),
+#         nn.Sequential(Embeddings(d_model, tgt_vocab), c(position)),
+#         Generator(d_model, tgt_vocab)
+#     )
+
+#     for p in model.parameters():
+#         if p.dim() > 1:
+#             nn.init.xavier_uniform_(p)
+#     return model
+
+def make_model(vocab_size, N=2, d_model=256, d_ff=1024, h=4, dropout=0.1):
+    """Create a smaller Decoder-only Transformer."""
     c = copy.deepcopy
     attn = MultiHeadedAttention(h, d_model)
     ff = FeedForward(d_model, d_ff, dropout)
     position = PositionalEncoding(d_model, dropout)
-    model = EncoderDecoder(
-        Encoder(EncoderLayer(d_model, c(attn), c(ff), dropout), N),
+    
+    model = DecoderOnlyTransformer(
         Decoder(DecoderLayer(d_model, c(attn), c(attn), c(ff), dropout), N),
-        nn.Sequential(Embeddings(d_model, src_vocab), c(position)),
-        nn.Sequential(Embeddings(d_model, tgt_vocab), c(position)),
-        Generator(d_model, tgt_vocab)
+        nn.Sequential(Embeddings(d_model, vocab_size), c(position)),
+        Generator(d_model, vocab_size)
     )
 
+    # Khởi tạo tham số
     for p in model.parameters():
         if p.dim() > 1:
             nn.init.xavier_uniform_(p)
     return model
+
+if __name__ == "__main__":
+    vocab_size = 10000  
+    model = make_model(vocab_size)
+    x = torch.randint(0, vocab_size, (8, 128))  # Batch size 8, seq len 128
+    mask = subsequent_mask(128).unsqueeze(0).repeat(8, 1, 1)
+    out = model(x, mask)
+    print(out.shape)
     

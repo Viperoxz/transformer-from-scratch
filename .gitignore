@@ -1,1 +1,4 @@
 __pycache__/
+data/vocab/vocab.pt
+data/data*.json
+TinyStories_all_data.tar.gz
